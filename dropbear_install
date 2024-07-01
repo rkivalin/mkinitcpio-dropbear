@@ -92,7 +92,19 @@ build ()
   add_dir "/var/log"
   touch "${BUILDROOT}"/var/log/lastlog
 
-  add_runscript
+  #systemd enabled
+  if declare -F add_systemd_unit >/dev/null 2>&1; then
+    add_systemd_unit "dropbear.service"
+    systemctl --root "$BUILDROOT" add-wants local-fs.target dropbear.service
+    printf "[Unit]
+After=local-fs.target
+DefaultDependencies=no
+" | add_file - "/etc/systemd/system/dropbear.service.d/override.conf" 644
+
+  #base enabled
+  else
+    add_runscript
+  fi
 }
 
 help ()
